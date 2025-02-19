@@ -19,17 +19,24 @@ const API_URL = "http://localhost:3000"; // Adjust based on backend URL
 
     // Fetch assignments from API
     const fetchAssignments = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch(`${API_URL}/assignments`);
-            const data = await response.json();
-            setAssignments(data.assignments || []);
-        } catch (error) {
-            console.error("❌ Error fetching assignments:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+      setLoading(true);
+      try {
+          const response = await fetch(`${API_URL}/assignments`);
+          const data = await response.json();
+          
+          // Ensure sorting if backend doesn't already return it sorted
+          const sortedAssignments = (data.assignments || []).sort(
+              (a, b) => new Date(a.due_date) - new Date(b.due_date)
+          );
+  
+          setAssignments(sortedAssignments);
+      } catch (error) {
+          console.error("❌ Error fetching assignments:", error);
+      } finally {
+          setLoading(false);
+      }
+  };
+  
 
     useEffect(() => {
         fetchAssignments();

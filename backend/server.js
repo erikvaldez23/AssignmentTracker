@@ -36,14 +36,16 @@ app.post("/assignments", (req, res) => {
 
 
 // Get all pending assignments
+// Get all pending assignments, sorted by due_date
 app.get("/assignments", (req, res) => {
-  db.all("SELECT * FROM assignments WHERE completed = 0", [], (err, rows) => {
+  db.all("SELECT * FROM assignments WHERE completed = 0 ORDER BY due_date ASC", [], (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
     res.json({ assignments: rows });
   });
 });
+
 
 // Get completed assignments
 app.get("/completed-assignments", (req, res) => {
