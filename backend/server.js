@@ -10,6 +10,31 @@ const PORT = 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
+// 🆕 Add an assignment to the database
+app.post("/assignments", (req, res) => {
+  console.log("Incoming POST request:", req.body);
+
+  const { course, name, type, dueDate } = req.body;
+
+  if (!course || !name || !type || !dueDate) {
+      return res.status(400).json({ error: "❌ All fields are required" });
+  }
+
+  const sql = `INSERT INTO assignments (course, name, type, due_date, completed) VALUES (?, ?, ?, ?, 0)`;
+  db.run(sql, [course, name, type, dueDate], function (err) {
+      if (err) {
+          console.error("Database Error:", err.message); // ✅ Log the actual error
+          return res.status(500).json({ error: err.message });
+      }
+      res.json({
+          message: "✅ Assignment added successfully",
+          assignment: { id: this.lastID, course, name, type, dueDate, completed: 0 },
+      });
+  });
+});
+
+
+
 // Get all pending assignments
 app.get("/assignments", (req, res) => {
   db.all("SELECT * FROM assignments WHERE completed = 0", [], (err, rows) => {

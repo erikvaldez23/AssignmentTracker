@@ -11,105 +11,83 @@ import { Picker } from "@react-native-picker/picker"; // npm install @react-nati
 
 const API_URL = "http://localhost:3000"; // Adjust based on backend URL
 
-const HomeScreen = () => {
-  const [assignments, setAssignments] = useState([]);
-  const [completedAssignments, setCompletedAssignments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [viewCompleted, setViewCompleted] = useState(false); // Toggle view state
+  const HomeScreen = ({ route }) => {
+    const [assignments, setAssignments] = useState([]);
+    const [completedAssignments, setCompletedAssignments] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [viewCompleted, setViewCompleted] = useState(false);
 
-  // Fetch assignments from API
-  useEffect(() => {
+    // Fetch assignments from API
     const fetchAssignments = async () => {
-      try {
-        const response = await fetch(`${API_URL}/assignments`);
-        const data = await response.json();
-        setAssignments(data.assignments || []);
-      } catch (error) {
-        console.error("❌ Error fetching assignments:", error);
-      } finally {
-        setLoading(false);
-      }
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_URL}/assignments`);
+            const data = await response.json();
+            setAssignments(data.assignments || []);
+        } catch (error) {
+            console.error("❌ Error fetching assignments:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const fetchCompletedAssignments = async () => {
-      try {
-        const response = await fetch(`${API_URL}/completed-assignments`);
-        const data = await response.json();
-        setCompletedAssignments(data.completed_assignments || []);
-      } catch (error) {
-        console.error("❌ Error fetching completed assignments:", error);
-      }
-    };
+    useEffect(() => {
+        fetchAssignments();
+    }, []);
 
-    fetchAssignments();
-    fetchCompletedAssignments();
-  }, []);
+    // 🔥 Listen for New Assignment from Navigation Props (Passed from Modal)
+    useEffect(() => {
+        if (route.params?.newAssignment) {
+            fetchAssignments();
+        }
+    }, [route.params?.newAssignment]);
 
-  // Mark assignment as completed
-  const markAsCompleted = async (id) => {
-    try {
-      await fetch(`${API_URL}/complete-assignment/${id}`, { method: "PUT" });
+    return (
+        <View style={styles.container}>
+            <Text style={styles.welcomeMessage}>Welcome Back, Erik! 🎉</Text>
 
-      // Move assignment to completed list
-      const completedItem = assignments.find((item) => item.id === id);
-      setCompletedAssignments([
-        ...completedAssignments,
-        { ...completedItem, completed: 1 },
-      ]);
-      setAssignments(assignments.filter((item) => item.id !== id));
-    } catch (error) {
-      console.error("❌ Error updating assignment:", error);
-    }
-  };
+            <Picker
+                selectedValue={viewCompleted.toString()}
+                onValueChange={(value) => setViewCompleted(value === "true")}
+                style={styles.picker}
+            >
+                <Picker.Item label="Upcoming Assignments" value="false" />
+                <Picker.Item label="Completed Assignments" value="true" />
+            </Picker>
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.welcomeMessage}>Welcome Back, Erik! 🎉</Text>
+            {loading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#007bff" />
+                    <Text>Loading assignments...</Text>
+                </View>
+            ) : (
+                <FlatList
+                    data={viewCompleted ? completedAssignments : assignments}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({ item }) => (
+                        <View style={styles.assignmentCard}>
+                            <Text style={styles.assignmentName}>{item.name}</Text>
+                            <Text style={styles.assignmentDetails}>
+                                {item.course || "No Course"} - {item.type}
+                            </Text>
+                            <Text style={styles.assignmentDate}>Due: {item.due_date}</Text>
 
-      {/* Dropdown to Toggle Active vs Completed */}
-      <Picker
-        selectedValue={viewCompleted.toString()} // Convert boolean to string
-        onValueChange={(value) => setViewCompleted(value === "true")} // Convert back to boolean
-        style={styles.picker}
-      >
-        <Picker.Item label="Upcoming Assignments" value="false" />
-        <Picker.Item label="Completed Assignments" value="true" />
-      </Picker>
-
-      {/* Display Assignments Based on Selected View */}
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007bff" />
-          <Text>Loading assignments...</Text>
+                            {!viewCompleted && (
+                                <TouchableOpacity
+                                    onPress={() => markAsCompleted(item.id)}
+                                    style={styles.completeButton}
+                                >
+                                    <Text style={styles.buttonText}>Mark as Completed</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    )}
+                />
+            )}
         </View>
-      ) : (
-        <FlatList
-          data={viewCompleted ? completedAssignments : assignments}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.assignmentCard}>
-              <Text style={styles.assignmentName}>{item.name}</Text>
-              <Text style={styles.assignmentDetails}>
-                {item.course || "No Course"} - {item.type}
-              </Text>
-              <Text style={styles.assignmentDate}>Due: {item.due_date}</Text>
-
-              {/* Mark as Complete Button (Only for Active Assignments) */}
-              {!viewCompleted && (
-                <TouchableOpacity
-                  onPress={() => markAsCompleted(item.id)}
-                  style={styles.completeButton}
-                >
-                  <Text style={styles.buttonText}>Mark as Completed</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-        />
-      )}
-    </View>
-  );
+    );
 };
+
 
 export default HomeScreen;
 
