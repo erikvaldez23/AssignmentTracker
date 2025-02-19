@@ -49,7 +49,7 @@ app.get("/assignments", (req, res) => {
 
 // Get completed assignments
 app.get("/completed-assignments", (req, res) => {
-  db.all("SELECT * FROM assignments WHERE completed = 1", [], (err, rows) => {
+  db.all("SELECT * FROM assignments WHERE completed = 0 ORDER BY due_date ASC", [], (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -60,6 +60,7 @@ app.get("/completed-assignments", (req, res) => {
 // Mark an assignment as completed
 app.put("/complete-assignment/:id", (req, res) => {
   const assignmentId = req.params.id;
+  
   db.run("UPDATE assignments SET completed = 1 WHERE id = ?", [assignmentId], function (err) {
     if (err) {
       return res.status(500).json({ error: err.message });
@@ -67,6 +68,7 @@ app.put("/complete-assignment/:id", (req, res) => {
     res.json({ message: "✅ Assignment marked as completed", changes: this.changes });
   });
 });
+
 
 // Start server
 app.listen(PORT, () => {

@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
+  Alert
 } from "react-native";
 import { Picker } from "@react-native-picker/picker"; // npm install @react-native-picker/picker
 
@@ -21,15 +22,19 @@ const API_URL = "http://localhost:3000"; // Adjust based on backend URL
     const fetchAssignments = async () => {
       setLoading(true);
       try {
-          const response = await fetch(`${API_URL}/assignments`);
-          const data = await response.json();
-          
-          // Ensure sorting if backend doesn't already return it sorted
-          const sortedAssignments = (data.assignments || []).sort(
+          // Fetch pending assignments
+          const responsePending = await fetch(`${API_URL}/assignments`);
+          const dataPending = await responsePending.json();
+          const sortedPending = (dataPending.assignments || []).sort(
               (a, b) => new Date(a.due_date) - new Date(b.due_date)
           );
   
-          setAssignments(sortedAssignments);
+          // Fetch completed assignments
+          const responseCompleted = await fetch(`${API_URL}/completed-assignments`);
+          const dataCompleted = await responseCompleted.json();
+  
+          setAssignments(sortedPending);
+          setCompletedAssignments(dataCompleted.completed_assignments || []);
       } catch (error) {
           console.error("❌ Error fetching assignments:", error);
       } finally {
@@ -37,6 +42,27 @@ const API_URL = "http://localhost:3000"; // Adjust based on backend URL
       }
   };
   
+
+  const markAsCompleted = async (id) => {
+    try {
+        const response = await fetch(`${API_URL}/complete-assignment/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            Alert.alert("✅ Success", "Assignment marked as completed!");
+            fetchAssignments(); // Refresh the assignment list
+        } else {
+            Alert.alert("❌ Error", "Failed to mark as completed: " + data.error);
+        }
+    } catch (error) {
+        console.error("❌ Error updating assignment:", error);
+        Alert.alert("❌ Error", "Failed to connect to server.");
+    }
+};
 
     useEffect(() => {
         fetchAssignments();
@@ -68,28 +94,30 @@ const API_URL = "http://localhost:3000"; // Adjust based on backend URL
                     <Text>Loading assignments...</Text>
                 </View>
             ) : (
-                <FlatList
-                    data={viewCompleted ? completedAssignments : assignments}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={({ item }) => (
-                        <View style={styles.assignmentCard}>
-                            <Text style={styles.assignmentName}>{item.name}</Text>
-                            <Text style={styles.assignmentDetails}>
-                                {item.course || "No Course"} - {item.type}
-                            </Text>
-                            <Text style={styles.assignmentDate}>Due: {item.due_date}</Text>
-
-                            {!viewCompleted && (
-                                <TouchableOpacity
-                                    onPress={() => markAsCompleted(item.id)}
-                                    style={styles.completeButton}
-                                >
-                                    <Text style={styles.buttonText}>Mark as Completed</Text>
-                                </TouchableOpacity>
-                            )}
-                        </View>
-                    )}
-                />
+              <FlatList
+              data={viewCompleted ? completedAssignments : assignments}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                  <View style={styles.assignmentCard}>
+                      <Text style={styles.assignmentName}>{item.name}</Text>
+                      <Text style={styles.assignmentDetails}>
+                          {item.course || "No Course"} - {item.type}
+                      </Text>
+                      <Text style={styles.assignmentDate}>Due: {item.due_date}</Text>
+          
+                      {/* Show 'Mark as Completed' button only for pending assignments */}
+                      {!viewCompleted && (
+                          <TouchableOpacity
+                              onPress={() => markAsCompleted(item.id)}
+                              style={styles.completeButton}
+                          >
+                              <Text style={styles.buttonText}>Mark as Completed</Text>
+                          </TouchableOpacity>
+                      )}
+                  </View>
+              )}
+          />
+          
             )}
         </View>
     );
