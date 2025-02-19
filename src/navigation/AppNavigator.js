@@ -8,6 +8,7 @@ import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { Picker } from '@react-native-picker/picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -18,27 +19,41 @@ const CustomHeader = ({ navigation }) => {
     const [selectedCourse, setSelectedCourse] = useState('');
     const [assignmentName, setAssignmentName] = useState('');
     const [assignmentType, setAssignmentType] = useState('');
+    const [dueDate, setDueDate] = useState(new Date());
 
     const courses = ['Math 101', 'Physics 201', 'Computer Science 301', 'History 101'];
     const assignmentTypes = ['Exam', 'Homework', 'Project', 'Quiz'];
 
+    // Function to Open Date Picker
+    const openDatePicker = () => {
+        DateTimePickerAndroid.open({
+            value: dueDate,
+            mode: 'date',
+            display: 'default',
+            onChange: (event, selectedDate) => {
+                if (selectedDate) setDueDate(selectedDate);
+            },
+        });
+    };
+
     return (
         <>
-             <SafeAreaView style={styles.safeArea}>
-            <View style={styles.headerContainer}>
-                {/* Hamburger Menu */}
-                <TouchableOpacity onPress={() => navigation.openDrawer()}>
-                    <MaterialCommunityIcons name="menu" size={28} color="black" />
-                </TouchableOpacity>
+            <SafeAreaView style={styles.safeArea}>
+                <View style={styles.headerContainer}>
+                    {/* Hamburger Menu */}
+                    <TouchableOpacity onPress={() => navigation.openDrawer()}>
+                        <MaterialCommunityIcons name="menu" size={28} color="black" />
+                    </TouchableOpacity>
 
-                <Text style={styles.headerTitle}>Assignment Tracker</Text>
+                    <Text style={styles.headerTitle}>Assignment Tracker</Text>
 
-                {/* Plus Button */}
-                <TouchableOpacity onPress={() => setModalVisible(true)}>
-                    <MaterialCommunityIcons name="plus-circle" size={28} color="black" />
-                </TouchableOpacity>
-            </View>
-        </SafeAreaView>
+                    {/* Plus Button */}
+                    <TouchableOpacity onPress={() => setModalVisible(true)}>
+                        <MaterialCommunityIcons name="plus-circle" size={28} color="black" />
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+
             {/* Modal for Adding Assignments */}
             <Modal
                 animationType="slide"
@@ -85,6 +100,14 @@ const CustomHeader = ({ navigation }) => {
                             ))}
                         </Picker>
 
+                        {/* Due Date Picker */}
+                        <Text style={styles.label}>Due Date</Text>
+                        <TouchableOpacity onPress={openDatePicker} style={styles.datePickerButton}>
+                            <Text style={styles.datePickerText}>
+                                {dueDate.toDateString()}
+                            </Text>
+                        </TouchableOpacity>
+
                         {/* Buttons */}
                         <View style={styles.buttonContainer}>
                             <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.cancelButton}>
@@ -105,13 +128,12 @@ const CustomHeader = ({ navigation }) => {
 const StackNavigator = () => {
     return (
         <Stack.Navigator
-        screenOptions={({ navigation }) => ({
-            header: () => <CustomHeader navigation={navigation} />, // Custom Header Component
-        })}
-    >
-        <Stack.Screen name="Home" component={HomeScreen} />
-    </Stack.Navigator>
-    
+            screenOptions={({ navigation }) => ({
+                header: () => <CustomHeader navigation={navigation} />, // Custom Header Component
+            })}
+        >
+            <Stack.Screen name="Home" component={HomeScreen} />
+        </Stack.Navigator>
     );
 };
 
@@ -176,6 +198,17 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 5,
         marginBottom: 15,
+    },
+    datePickerButton: {
+        backgroundColor: '#f0f0f0',
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+        marginBottom: 15,
+    },
+    datePickerText: {
+        fontSize: 16,
+        color: 'black',
     },
     buttonContainer: {
         flexDirection: 'row',
