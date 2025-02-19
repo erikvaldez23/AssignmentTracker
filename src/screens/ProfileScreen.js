@@ -9,7 +9,7 @@ const ProfileScreen = () => {
                 style={styles.profileImage}
             />
             <Text style={styles.name}>Erik Valdez</Text>
-            <Text style={styles.email}>erik.valdez@example.com</Text>
+            <Text style={styles.email}>erikkvaldez@gmail.com</Text>
         </View>
     );
 };
