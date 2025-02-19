@@ -49,7 +49,7 @@ app.get("/assignments", (req, res) => {
 
 // Get completed assignments
 app.get("/completed-assignments", (req, res) => {
-  db.all("SELECT * FROM assignments WHERE completed = 0 ORDER BY due_date ASC", [], (err, rows) => {
+  db.all("SELECT * FROM assignments WHERE completed = 1 ORDER BY due_date DESC", [], (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
